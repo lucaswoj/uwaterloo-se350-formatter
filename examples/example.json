@@ -1,0 +1,11 @@
+{
+  "title": "Basic Arithmetic",
+  "question": "What is the result of this mathematical operation\n1 + 1 = ?\nUse a decimal base.",
+  "feedback": "Adding numbers is an essential skill. MATH 115 and MATH 117",
+  "options": [
+    {"answer": 5, "points": 0, "feedback": "Incorrect answer. Revisit your basic math skills."},
+    {"answer": 11, "points": 0, "feedback": "Incorrect answer. Revisit your basic math skills."},
+    {"answer": 3, "points": 50, "feedback": "The question was phrased in the decimal system."},
+    {"answer": 2, "points": 100, "feedback": "Correct."}
+  ]
+}

@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'erb'
+require 'test/unit/assertions'
+
+# First, we extract the input from stdin
+input = $stdin.read
+
+# Then we parse the input into a data structure
+question = JSON.parse(input, :symbolize_names => true)
+
+# Validate all required fields are present
+[:title, :question, :options].each { |field| raise "'#{field}' field must be non-null" if question[field].nil? }
+# If no feedback is given, insert a generic default.
+question[:feedback] ||= "Correct"
+# All questions must be multiple choice questions with four possible answers.
+raise "You must provide exactly 4 options for each question" unless question[:options].length == 4
+# Ensure all point values are integers between 0 and 100
+raise "All option 'point' values must be integers" if question[:options].count {|o| !o[:points].is_a?(Integer) || !(0..100).include?(o[:points])} != 0
+# At most one answer must give full points.
+raise "Exactly one option must give 100 points" unless question[:options].count {|o| o[:points] == 100} == 1
+# At least two answers must give zero points.
+raise "At least two options must give 0 points" unless question[:options].count {|o| o[:points] == 0} >= 2
+# One question may give zero to ﬁfty percent of the points.
+raise "At most one option may give 1 to 50 points" unless question[:options].count {|o| (1..50).include?(o[:points])} <= 1
+
+# This is the template required for the d2l import
+def escape(input); input.to_s.gsub('"', '\\"'); end
+template = ERB.new <<-eos
+NewQuestion,MC,
+Title,"<%=escape question[:title] %>",
+QuestionText,"\n<%=escape question[:question] %>\n",
+<% question[:options].each do |option| %><%#
+  %>Option,<%= option[:points] %>,"<%=escape option[:answer] %>",,"<%=escape option[:feedback] %>"
+<% end %><%#
+%>Feedback,"<%=escape question[:feedback] %>",,,,
+eos
+
+# Generate output
+output = template.result(binding)
+
+# Run through the prof's question validator, if it is installed.
+`echo "#{escape(output)}" | question-validator` if system('which question-validator > /dev/null 2>&1')
+
+# Print out the d2l formatted question if everything worked!
+$stdout.print(output)
+$stderr.puts("Question successfully generated!")
