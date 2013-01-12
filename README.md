@@ -34,12 +34,14 @@ Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
 
 You must have Ruby installed to run this script. I haven't tested many versions but I suspect it will work on Ruby 1.8.7+, which is installed on OSX and most Linux systems out of the box.
 
-Install the `bundler` gem, which handles this project's dependencies, by running `gem install bundler`. Then use `bundler` to install this app's dependencies by running `bundle install`.
+Clone this repository to your system `git clone git://github.com/lucaswoj/se350-question-writer.git; cd se350-question-writer`
+
+Install the bundler gem, which handles this project's dependencies, by running `gem install bundler`. Then use bundler to install this app's dependencies by running `bundle install`.
 
 Mark the validator script as executable `chmod +x ./se350-question-writer`
 
 ## Usage
 
-This script takes a JSON string from `stdin` and prints a validated d2l-formatted question file on `stdout`.
+This script takes a JSON string from stdin and prints a validated d2l-formatted question file on stdout.
 
 It can be run as `./se350-question-writer < examples/example.json > examples/example.d2l`.
