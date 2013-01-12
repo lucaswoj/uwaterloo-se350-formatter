@@ -79,3 +79,4 @@ Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
 
  - Support YAML-formatted questions
  - Generate multiple questions at once
+ - Automatically generate generic feedback for questions and options
