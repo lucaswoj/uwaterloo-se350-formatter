@@ -29,6 +29,7 @@ Option,50,"3",,"The question was phrased in the decimal system."
 Option,100,"2",,"Correct."
 Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
 ```
+Ensuring the question meets all requirements and running it through the "official" validator, if you have it installed on your system.
 
 ## Installation
 
