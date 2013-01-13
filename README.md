@@ -1,35 +1,6 @@
 # SE350 Question Writer
 
-This is a script that produces properly formatted questions for submission in SE350 from JSON. It turns this
-```
-{
-  "title": "Basic Arithmetic",
-  "question": "What is the result of this mathematical operation\n1 + 1 = ?\nUse a decimal base.",
-  "feedback": "Adding numbers is an essential skill. MATH 115 and MATH 117",
-  "options": [
-    {"answer": 5, "points": 0, "feedback": "Incorrect answer. Revisit your basic math skills."},
-    {"answer": 11, "points": 0, "feedback": "Incorrect answer. Revisit your basic math skills."},
-    {"answer": 3, "points": 50, "feedback": "The question was phrased in the decimal system."},
-    {"answer": 2, "points": 100, "feedback": "Correct."}
-  ]
-}
-```
-into this
-```
-NewQuestion,MC,
-Title,"Basic Arithmetic",
-QuestionText,"
-What is the result of this mathematical operation
-1 + 1 = ?
-Use a decimal base.
-",
-Option,0,"5",,"Incorrect answer. Revisit your basic math skills."
-Option,0,"11",,"Incorrect answer. Revisit your basic math skills."
-Option,50,"3",,"The question was phrased in the decimal system."
-Option,100,"2",,"Correct."
-Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
-```
-Ensuring the question meets all requirements and running it through the "official" validator, if you have it installed on your system.
+This script allows you to write your quiz questions for SE350 in JSON instead of the d2l csv format.
 
 ## Installation
 
@@ -43,11 +14,11 @@ Mark the validator script as executable `chmod +x ./se350-question-writer`
 
 ## Usage
 
-This script takes a JSON string from stdin and prints a validated d2l-formatted question file on stdout.
+This script takes in your quiz questions as a JSON string from stdin and prints a tar archive of validated d2l-formatted question files to stdout.
 
-It can be run as `./se350-question-writer < examples/example.json > examples/example.d2l` where `examples/example.json` is formatted like
+It can be run as `./se350-question-writer < examples/example.json > examples/example.tar` where `examples/example.json` is formatted like
 ```
-{
+[{
   "title": "Basic Arithmetic",
   "question": "What is the result of this mathematical operation\n1 + 1 = ?\nUse a decimal base.",
   "feedback": "Adding numbers is an essential skill. MATH 115 and MATH 117",
@@ -57,9 +28,9 @@ It can be run as `./se350-question-writer < examples/example.json > examples/exa
     {"answer": 3, "points": 50, "feedback": "The question was phrased in the decimal system."},
     {"answer": 2, "points": 100, "feedback": "Correct."}
   ]
-}
+}, ...]
 ```
-to produce a d2l formatted question like
+to produce a tar archive of d2l-formatted questions like
 ```
 NewQuestion,MC,
 Title,"Basic Arithmetic",
@@ -78,6 +49,5 @@ Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
 ## Todo
 
  - Support YAML-formatted questions
- - Generate multiple questions at once and tarball them together
  - Automatically generate generic feedback for questions and options
  - Unit tests? I guess...

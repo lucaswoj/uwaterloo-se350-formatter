@@ -3,33 +3,55 @@
 require 'rubygems'
 require 'json'
 require 'erb'
-require 'test/unit/assertions'
+require 'tmpdir'
+
+# Check for official validator
+def validator?; system('which question-validator > /dev/null 2>&1'); end
+if !validator?
+  $stderr.puts("WARNING: Did not detect 'official' validator installed on your system. This script " +
+    "WILL work but, to be safe, you should probably install it from " +
+    "https://github.com/jcpetkovich/App-QuestionValidator/.")
+end
 
 # First, we extract the input from stdin
 $stderr.puts("Reading input...")
 input = $stdin.read
-question = JSON.parse(input, :symbolize_names => true)
+questions = JSON.parse(input, :symbolize_names => true)
 
-# Validate all required fields are present
 $stderr.puts("Validating input...")
-[:title, :question, :options, :feedback].each { |field| raise "'#{field}' field must be non-null" if question[field].nil? }
-question[:options].each do |option|
-  [:points, :answer].each { |field| raise "'#{field}' field must be non-null" if option[field].nil? }
-end
-# All questions must be multiple choice questions with four possible answers.
-raise "You must provide exactly 4 options for each question" unless question[:options].length == 4
-# Ensure all point values are integers between 0 and 100
-raise "All option 'point' values must be integers" if question[:options].count {|o| !o[:points].is_a?(Integer) || !(0..100).include?(o[:points])} != 0
-# At most one answer must give full points.
-raise "Exactly one option must give 100 points" unless question[:options].count {|o| o[:points] == 100} == 1
-# At least two answers must give zero points.
-raise "At least two options must give 0 points" unless question[:options].count {|o| o[:points] == 0} >= 2
-# One question may give zero to ﬁfty percent of the points.
-raise "At most one option may give 1 to 50 points" unless question[:options].count {|o| (1..50).include?(o[:points])} <= 1
+raise 'Questions must be provided as a JSON array' unless questions.is_a?(Array)
+$stderr.puts 'WARNING: You should submit 4 questions' unless questions.length == 4
 
-# This is the template required for the d2l import
-def escape(input); input.to_s.gsub('"', '\\"'); end
-template = ERB.new <<-eos
+# Turn each JSON question into a d2l question
+outputs = []
+questions.each_with_index do |question, index|
+  # Validate all required question fields are present
+  $stderr.puts("\nValidating question #{index}...")
+  [:title, :question, :options, :feedback].each do |field|
+    raise "'#{field}' field must be non-null for questions" if question[field].nil?
+  end
+
+  # Validating all required option fields are present
+  question[:options].each do |option|
+    [:points, :answer].each do |field|
+      raise "'#{field}' field must be non-null for options" if option[field].nil?
+    end
+  end
+
+  # All questions must be multiple choice questions with four possible answers.
+  raise "You must provide exactly 4 options for each question" unless question[:options].length == 4
+  # Ensure all point values are integers between 0 and 100
+  raise "All option 'point' values must be integers" unless question[:options].count {|o| !(0..100).include?(o[:points])} == 0
+  # At most one answer must give full points.
+  raise "Exactly one option must give 100 points" unless question[:options].count {|o| o[:points] == 100} == 1
+  # At least two answers must give zero points.
+  raise "At least two options must give 0 points" unless question[:options].count {|o| o[:points] == 0} >= 2
+  # One question may give zero to ﬁfty percent of the points.
+  raise "At most one option may give 1 to 50 points" unless question[:options].count {|o| (1..50).include?(o[:points])} <= 1
+
+  # This is the template required for the d2l import
+  def escape(input); input.to_s.gsub('"', '\\"'); end
+  template = ERB.new <<-eos
 NewQuestion,MC,
 Title,"<%=escape question[:title] %>",
 QuestionText,"\n<%=escape question[:question] %>\n",
@@ -37,20 +59,42 @@ QuestionText,"\n<%=escape question[:question] %>\n",
   %>Option,<%= option[:points] %>,"<%=escape option[:answer] %>",,"<%=escape option[:feedback] %>"
 <% end %><%#
 %>Feedback,"<%=escape question[:feedback] %>",,,,
-eos
+  eos
 
-# Generate output
-$stderr.puts("Generating output...")
-output = template.result(binding)
+  # Generate output
+  $stderr.puts("Generating output for question #{index}...")
+  output = template.result(binding)
 
-# Run through the prof's question validator, if it is installed.
-if system('which question-validator > /dev/null 2>&1')
-  $stderr.puts("Detected official validator, running output through it...")
-  `echo "#{escape(output)}" | question-validator`
-else
-  $stderr.puts("Did not detect 'official' validator. This script WILL work but, to be safe, you should probably install it from https://github.com/jcpetkovich/App-QuestionValidator/.")
+  # Run through the prof's question validator, if it is installed.
+  if validator?
+    $stderr.puts("Running question #{index} through official validator...")
+    o = `echo "#{escape(output)}" | question-validator 2>&1`
+    $stderr.print(o)
+    throw "Question #{index} did not pass official validator" unless $? == 0 && o == ''
+  end
+
+  # Save out the d2l formatted question if everything worked!
+  $stderr.puts("Question #{index} successfully generated!")
+  outputs.push(output)
 end
 
-# Print out the d2l formatted question if everything worked!
-$stdout.print(output)
-$stderr.puts("Question successfully generated!")
+$stderr.puts("\nCreating tmp dir...")
+Dir.mktmpdir("se350") do |tmpdir|
+  dirname = 'questions'
+  dir = File.join(tmpdir, dirname)
+  Dir.mkdir(dir)
+
+  # Write each d2l question into its own file
+  outputs.each_with_index do |output, index|
+    $stderr.puts("Writing question #{index} to disk...")
+    File.open(File.join(dir, "#{index}.csv"), "w") do |file|
+      file << output
+    end
+  end
+
+  # Tar the tmpdir together
+  $stderr.puts("Taring all files together...")
+  $stdout.print `tar -C #{tmpdir} -cz #{dirname}`
+
+  $stderr.puts("Done!")
+end
