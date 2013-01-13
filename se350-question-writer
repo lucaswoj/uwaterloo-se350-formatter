@@ -12,9 +12,7 @@ input = $stdin.read
 question = JSON.parse(input, :symbolize_names => true)
 
 # Validate all required fields are present
-[:title, :question, :options].each { |field| raise "'#{field}' field must be non-null" if question[field].nil? }
-# If no feedback is given, insert a generic default.
-question[:feedback] ||= "Correct"
+[:title, :question, :options, :feedback].each { |field| raise "'#{field}' field must be non-null" if question[field].nil? }
 # All questions must be multiple choice questions with four possible answers.
 raise "You must provide exactly 4 options for each question" unless question[:options].length == 4
 # Ensure all point values are integers between 0 and 100
