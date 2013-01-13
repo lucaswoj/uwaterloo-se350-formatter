@@ -6,13 +6,16 @@ require 'erb'
 require 'test/unit/assertions'
 
 # First, we extract the input from stdin
+$stderr.puts("Reading input...")
 input = $stdin.read
-
-# Then we parse the input into a data structure
 question = JSON.parse(input, :symbolize_names => true)
 
 # Validate all required fields are present
+$stderr.puts("Validating input...")
 [:title, :question, :options, :feedback].each { |field| raise "'#{field}' field must be non-null" if question[field].nil? }
+question[:options].each do |option|
+  [:points, :answer].each { |field| raise "'#{field}' field must be non-null" if option[field].nil? }
+end
 # All questions must be multiple choice questions with four possible answers.
 raise "You must provide exactly 4 options for each question" unless question[:options].length == 4
 # Ensure all point values are integers between 0 and 100
@@ -37,10 +40,16 @@ QuestionText,"\n<%=escape question[:question] %>\n",
 eos
 
 # Generate output
+$stderr.puts("Generating output...")
 output = template.result(binding)
 
 # Run through the prof's question validator, if it is installed.
-`echo "#{escape(output)}" | question-validator` if system('which question-validator > /dev/null 2>&1')
+if system('which question-validator > /dev/null 2>&1')
+  $stderr.puts("Detected official validator, running output through it...")
+  `echo "#{escape(output)}" | question-validator`
+else
+  $stderr.puts("Did not detect 'official' validator. This script WILL work but, to be safe, you should probably install it from https://github.com/jcpetkovich/App-QuestionValidator/.")
+end
 
 # Print out the d2l formatted question if everything worked!
 $stdout.print(output)

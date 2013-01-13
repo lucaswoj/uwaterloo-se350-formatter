@@ -78,5 +78,6 @@ Feedback,"Adding numbers is an essential skill. MATH 115 and MATH 117",,,,
 ## Todo
 
  - Support YAML-formatted questions
- - Generate multiple questions at once
+ - Generate multiple questions at once and tarball them together
  - Automatically generate generic feedback for questions and options
+ - Unit tests? I guess...
