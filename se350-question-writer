@@ -27,7 +27,7 @@ outputs = []
 questions.each_with_index do |question, index|
   # Validate all required question fields are present
   $stderr.puts("\nValidating question #{index}...")
-  [:title, :question, :options, :feedback].each do |field|
+  [:title, :question, :options].each do |field|
     raise "'#{field}' field must be non-null for questions" if question[field].nil?
   end
 
